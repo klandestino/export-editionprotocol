@@ -1,4 +1,15 @@
 {
+	"name": "klandestino/export-editionprotocol",
+	"description": "Export Edition Protocol lets you export a edition protocol.",
+	"homepage": "https://klandestino.se",
+	"license": "GPLv2 or later",
+	"authors": [
+		{
+			"name": "Klandestino AB",
+			"homepage": "https://klandestino.se"
+		}
+	],
+	"type": "wordpress-plugin",
     "require": {
         "deliciousbrains/wp-background-processing": "^1.0"
     }
