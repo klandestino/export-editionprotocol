@@ -11,6 +11,10 @@
  * @package         Editionprotocol
  */
 
+require 'vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 // Include WP Background Process class.
 if ( ! class_exists( 'WP_Background_Process' ) ) {
 	include_once plugin_dir_path( __FILE__ ) . 'vendor/deliciousbrains/wp-background-processing/wp-background-processing.php';
@@ -225,21 +229,44 @@ add_action(
 	'init',
 	function() {
 		if( isset( $_GET['download-protocol'] ) ) {
-			$post_id = (int) $_GET['download-protocol'];
-			$array   = get_post_meta( $post_id, 'protocol_data', true );
+			// Get edition protocol post.
+			$protocol = get_post( $_GET['download-protocol'] );
+			if ( $protocol instanceof WP_Post ) {
+				// Get all articles in protocol_data.
+				$articles = get_post_meta( $protocol->ID, 'protocol_data', true );
 
-	        header('Content-Type: text/csv');
-	        header('Content-Disposition: attachment; filename=' . get_the_title( $post_id ) . '.csv');
+				// Initiate Spreadsheet.
+				$spreadsheet = new Spreadsheet();
+				$sheet       = $spreadsheet->getActiveSheet();
 
-			$buffer = fopen("php://memory","w+");
-			foreach($array as $file) {
-                fputcsv($buffer, $file);
-            }
-			rewind($buffer);
-			$csv = stream_get_contents($buffer);
-			fclose($buffer);
+				// Loop through alla articles and generate cells in sheet.
+				foreach ( $articles as $index => $article ) {
+					$index++; // Add 1 to index to avoid zero index in Excel.
+					foreach ( $article as $key => $value ) {
+						$article[$key] = str_replace( '%index%', $index, $value );
+					}
+					$sheet->fromArray( $article, NULL, "A{$index}" );
+				}
 
-	        echo $csv;
+				// Create a xlsx file in tmp and output it to the browser.
+				$writer   = new Xlsx( $spreadsheet );
+				$filepath = '/tmp/tmp.xlsx';
+				$writer->save( $filepath );
+				if ( file_exists( $filepath ) ) {
+		            header('Content-Description: File Transfer');
+		            header('Content-Type: application/octet-stream');
+		            header('Content-Disposition: attachment; filename="'.basename($filepath).'"');
+		            header('Expires: 0');
+		            header('Cache-Control: must-revalidate');
+		            header('Pragma: public');
+		            header('Content-Length: ' . filesize($filepath));
+		            // Flush system output buffer.
+		            flush();
+		            readfile($filepath);
+		        }
+
+			}
+			// Die WordPress without output.
 	        die();
 		}
 	}

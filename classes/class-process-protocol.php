@@ -38,10 +38,13 @@ add_action('plugins_loaded', function() {
 	        		'ObjectTitle'    => $this->get_post_title( $post ),
 	        		'PubDate'        => $this->get_post_pubdate( $post ),
 	        		'MediaCopyright' => $this->get_post_copyright( $post ),
-	        		'Length'         => $this->get_post_length( $post ),
+	        		//'Length'         => $this->get_post_length( $post ),
+	        		'Length'         => '=LEN(D%index%)',
 	        		'Images'         => $this->get_post_images( $post ),
-	        		'ImagesLenght'   => $this->get_post_image_lenght( $post ),
-	        		'TotalLenght'    => $this->get_post_total_lenght( $post ),
+	        		//'ImagesLenght'   => $this->get_post_image_lenght( $post ),
+	        		'ImagesLenght'   => '=SUM(J%index%*300)',
+	        		//'TotalLenght'    => $this->get_post_total_lenght( $post ),
+	        		'TotalLenght'    => '=SUM(I%index%+K%index%)',
 	        		'License'        => '',
 	        		'IsEditorial'    => 1,
 	        	);
@@ -78,9 +81,14 @@ add_action('plugins_loaded', function() {
 		 * Get filtered and RAW post content post.
 		 */
 		protected function get_post_content( WP_Post $post ): string {
-			$post_content = get_post_field( 'post_content', $post->ID );
-			$post_content = apply_filters( 'the_content', $post_content );
-			return wp_strip_all_tags( $post_content );
+			$post_excerpt      = get_post_field( 'post_excerpt', $post->ID );
+			$post_content      = get_post_field( 'post_content', $post->ID );
+			$total_content     = $post_excerpt . $post_content;
+			$total_content     = apply_filters( 'the_content', $total_content );
+        	$raw_total_content = wp_strip_all_tags( $total_content );
+        	$raw_total_content = preg_replace( "/\r|\n/", "", $raw_total_content );
+
+			return wp_strip_all_tags( $raw_total_content );
 		}
 
 		/**
