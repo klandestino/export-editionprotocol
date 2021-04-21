@@ -87,28 +87,30 @@ add_action(
 /**
  * Adds "Create Edition Protocol" button on module list page
  */
-add_action('manage_posts_extra_tablenav', 'add_extra_button');
-function add_extra_button($where)
-{
-    global $post_type_object;
-    if ($post_type_object->name === 'edition_protocol') {
-        $years = get_posts_years_array();
-        ?>
-    	</form>
-        <form method="post" action="">
-        	<select name="year">
-        		<?php
-        		foreach ( $years as $year ) {
-        			echo "<option value=\"{$year}\">{$year}</option>";
-        		}
-        		?>
-        	</select>
-        	<?php wp_nonce_field( 'editionprotocol_action', 'editionprotocol_nonce_field' ); ?>
-        	<input type="submit" class="button" value="<?php _e( 'Create Edition Protocol', 'editionprotocol' ); ?>">
-        </form>
-        <?php
-    }
-}
+add_action(
+	'manage_posts_extra_tablenav',
+	function()
+	{
+	    global $post_type_object;
+	    if ($post_type_object->name === 'edition_protocol') {
+	        $years = get_posts_years_array();
+	        ?>
+	    	</form>
+	        <form method="post" action="">
+	        	<select name="year">
+	        		<?php
+	        		foreach ( $years as $year ) {
+	        			echo "<option value=\"{$year}\">{$year}</option>";
+	        		}
+	        		?>
+	        	</select>
+	        	<?php wp_nonce_field( 'editionprotocol_action', 'editionprotocol_nonce_field' ); ?>
+	        	<input type="submit" class="button" value="<?php _e( 'Create Edition Protocol', 'editionprotocol' ); ?>">
+	        </form>
+	        <?php
+	    }
+	}
+);
 
 /**
  * Get all the years that has published articles.
@@ -219,7 +221,7 @@ add_filter(
 	function( $columns ) {
 		unset( $columns['date'] );
 		unset( $columns['title'] );
-		$columns['name'] = __( 'Title', 'editionprotocol' );
+		$columns['name']     = __( 'Title', 'editionprotocol' );
 		$columns['download'] = __( 'Download', 'editionprotocol' );
   		return $columns;
 	}
