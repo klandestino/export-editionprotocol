@@ -46,6 +46,11 @@ class EditionProtocol {
 			return;
 		}
 
+		// Test year is given.
+		if ( ! isset( $_POST['year'] ) ) {
+			return;
+		}
+
 		// Get last year posts and push to background process.
 		$args = array(
 			'numberposts' => -1,
@@ -53,7 +58,7 @@ class EditionProtocol {
 			'post_type'   => 'post',
 		    'date_query' => array(
 		        array(
-		            'year' => date( 'Y', strtotime( '-1 year' ) ),
+		            'year' => $_POST['year'],
 		        ),
 		    ),
 
@@ -80,33 +85,49 @@ add_action(
 );
 
 /**
- * Register a custom menu page.
+ * Adds "Create Edition Protocol" button on module list page
  */
-add_action(
-	'admin_menu',
-	function() {
-	    add_submenu_page( 
-	        'tools.php',
-	        'Export Edition Protocol',
-	        'Export Edition Protocol',
-	        'manage_options',
-	        'export-editionprotocol',
-	        'editionprotocol_page_callback',
-	    );
-	}
-);
+add_action('manage_posts_extra_tablenav', 'add_extra_button');
+function add_extra_button($where)
+{
+    global $post_type_object;
+    if ($post_type_object->name === 'edition_protocol') {
+        $years = get_posts_years_array();
+        ?>
+    	</form>
+        <form method="post" action="">
+        	<select name="year">
+        		<?php
+        		foreach ( $years as $year ) {
+        			echo "<option value=\"{$year}\">{$year}</option>";
+        		}
+        		?>
+        	</select>
+        	<?php wp_nonce_field( 'editionprotocol_action', 'editionprotocol_nonce_field' ); ?>
+        	<input type="submit" class="button" value="<?php _e( 'Create Edition Protocol', 'editionprotocol' ); ?>">
+        </form>
+        <?php
+    }
+}
 
 /**
- * Output for admin tools page.
+ * Get all the years that has published articles.
  */
-function editionprotocol_page_callback() {
-		echo '<div class="wrap">';
-		echo '<h2>' . __( 'Export Edition Protocol', 'editionprotocol' ) . '</h2>';
-		echo '<form action="" method="post">';
-		wp_nonce_field( 'editionprotocol_action', 'editionprotocol_nonce_field' );
-		echo '<input type="submit" value="' . __( 'Start', 'editionprotocol' ) . '" class="button">';
-		echo '</form>';
-		echo '</div>';
+function get_posts_years_array() {
+    global $wpdb;
+    $result = array();
+    $years = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT YEAR(post_date) FROM {$wpdb->posts} WHERE post_status = 'publish' GROUP BY YEAR(post_date) DESC"
+        ),
+        ARRAY_N
+    );
+    if ( is_array( $years ) && count( $years ) > 0 ) {
+        foreach ( $years as $year ) {
+            $result[] = $year[0];
+        }
+    }
+    return $result;
 }
 
 /**
@@ -165,19 +186,23 @@ add_action(
 			'labels'                => $labels,
 			'supports'              => array( 'title', 'editor' ),
 			'hierarchical'          => false,
-			'public'                => true,
+			'public'                => false,
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_position'         => 25,
 			'menu_icon'             => 'dashicons-clipboard',
-			'show_in_admin_bar'     => true,
-			'show_in_nav_menus'     => true,
+			'show_in_admin_bar'     => false,
+			'show_in_nav_menus'     => false,
 			'can_export'            => false,
 			'has_archive'           => false,
 			'exclude_from_search'   => true,
-			'publicly_queryable'    => true,
+			'publicly_queryable'    => false,
 			'rewrite'               => false,
-			'capabilities'          => $capabilities,
+			'capabilities' => array(
+	            'create_posts' => 'do_not_allow',
+	            'delete_post'  => 'manage_options',
+	            'edit_posts'   => 'manage_options',
+	        ),
 			'show_in_rest'          => false,
 		);
 

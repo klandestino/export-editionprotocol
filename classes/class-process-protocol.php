@@ -16,6 +16,13 @@ add_action('plugins_loaded', function() {
 		protected $action = 'edition_protocol';
 
 		/**
+		 * The year string.
+		 *
+		 * @var string
+		 */
+		public $year = '1970';
+
+		/**
 		 * The task action for every task in queue.
 		 *
 		 * @param mixed $item Queue item to iterate over
@@ -26,7 +33,8 @@ add_action('plugins_loaded', function() {
 			$post = get_post( $post_id );
 	        if ( $post instanceof WP_Post ) {
 	        	// Get the edition protocol post.
-	        	$protocol = $this->get_protocol();
+	        	$this->year = $this->get_issue_year( $post );
+	        	$protocol   = $this->get_protocol( $this->year );
 
 	        	// Set up the protocol data.
 	        	$protocol_data = array(
@@ -167,12 +175,9 @@ add_action('plugins_loaded', function() {
 		/**
 		 * Get edition protocol post for the last year.
 		 */
-		protected function get_protocol(): ? WP_Post {
-			// Get last year.
-			$post_name = date( 'Y', strtotime( '-1 year' ) );
-
+		protected function get_protocol( string $year ): ? WP_Post {
 			// Get existing edition protocol.
-			$protocol = get_page_by_path( $post_name, OBJECT, 'edition_protocol' );
+			$protocol = get_page_by_path( $year, OBJECT, 'edition_protocol' );
 
 			// If that edition protocol exists, create a new one and set as Draft.
 			if ( ! $protocol instanceof WP_Post ) {
@@ -180,8 +185,8 @@ add_action('plugins_loaded', function() {
 					array(
 						'post_type'   => 'edition_protocol',
 						'post_status' => 'draft',
-						'post_title'  => $post_name,
-						'post_name'   => $post_name,
+						'post_title'  => $year,
+						'post_name'   => $year,
 					)
 				);
 				$protocol = get_post( $protocol_id );
@@ -208,7 +213,7 @@ add_action('plugins_loaded', function() {
 			parent::complete();
 
 			// Get edition protocol.
-			$protocol = $this->get_protocol();
+			$protocol = $this->get_protocol( $this->year );
 
 			// Set edition protocol as Publish.
 			wp_update_post(
