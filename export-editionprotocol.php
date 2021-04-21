@@ -37,7 +37,7 @@ class EditionProtocol {
     }
 
     public function init() {
-        $this->process_handler = new ProcessProtocol;
+        $this->process_handler = new ProcessProtocol();
 
 		// Test the post nonce.
 		if ( ! isset( $_POST['editionprotocol_nonce_field'] ) 
@@ -56,21 +56,44 @@ class EditionProtocol {
 			'numberposts' => -1,
 			'post_status' => 'publish',
 			'post_type'   => 'post',
-		    'date_query' => array(
-		        array(
-		            'year' => $_POST['year'],
-		        ),
-		    ),
+			'date_query' => array(
+			    array(
+			        'after'     => get_start_date( 1, $_POST['year'] ),
+			        'before'    => get_end_date( 52, $_POST['year'] ),
+			        'inclusive' => true,
+			    ),
+			),
 
 		);
 		$process_posts = get_posts( $args );
 		foreach ( $process_posts as $process_post ) {
-		    $this->process_handler->push_to_queue( $process_post->ID );
+		    $this->process_handler->push_to_queue( array( $process_post->ID, $_POST['year'] ) );
 		}
 
 		// Dispatch queue.
         $this->process_handler->save()->dispatch();
     }
+}
+
+/**
+ * Get start data of a certain week.
+ */
+function get_start_date( $week, $year ): string {
+	$date_time = new DateTime();
+	$date_time->setISODate( $year, $week );
+
+	return $date_time->format('Y-m-d');
+}
+
+/**
+ * Get end data of a certain week.
+ */
+function get_end_date( $week, $year ): string {
+	$date_time = new DateTime();
+	$date_time->setISODate( $year, $week );
+
+	$date_time->modify('+6 days');
+	return $date_time->format('Y-m-d');
 }
 
 /**

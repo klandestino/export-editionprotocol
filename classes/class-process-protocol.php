@@ -16,11 +16,18 @@ add_action('plugins_loaded', function() {
 		protected $action = 'edition_protocol';
 
 		/**
-		 * The year string.
+		 * The name string.
 		 *
 		 * @var string
 		 */
-		public $year = '1970';
+		protected $name = '';
+
+		/**
+		 * Initiate new background process
+		 */
+		public function __construct() {
+			parent::__construct();
+		}
 
 		/**
 		 * The task action for every task in queue.
@@ -29,12 +36,13 @@ add_action('plugins_loaded', function() {
 		 *
 		 * @return mixed
 		 */
-		protected function task( $post_id = null ): bool {
-			$post = get_post( $post_id );
+		protected function task( $args ): bool {
+			$post_id    = $args[0];
+			$this->name = $args[1];
+			$post       = get_post( $post_id );
 	        if ( $post instanceof WP_Post ) {
 	        	// Get the edition protocol post.
-	        	$this->year = $this->get_issue_year( $post );
-	        	$protocol   = $this->get_protocol( $this->year );
+	        	$protocol   = $this->get_protocol();
 
 	        	// Set up the protocol data.
 	        	$protocol_data = array(
@@ -175,9 +183,9 @@ add_action('plugins_loaded', function() {
 		/**
 		 * Get edition protocol post for the last year.
 		 */
-		protected function get_protocol( string $year ): ? WP_Post {
+		protected function get_protocol(): ? WP_Post {
 			// Get existing edition protocol.
-			$protocol = get_page_by_path( $year, OBJECT, 'edition_protocol' );
+			$protocol = get_page_by_path( $this->name, OBJECT, 'edition_protocol' );
 
 			// If that edition protocol exists, create a new one and set as Draft.
 			if ( ! $protocol instanceof WP_Post ) {
@@ -185,8 +193,8 @@ add_action('plugins_loaded', function() {
 					array(
 						'post_type'   => 'edition_protocol',
 						'post_status' => 'draft',
-						'post_title'  => $year,
-						'post_name'   => $year,
+						'post_title'  => $this->name,
+						'post_name'   => $this->name,
 					)
 				);
 				$protocol = get_post( $protocol_id );
@@ -213,7 +221,7 @@ add_action('plugins_loaded', function() {
 			parent::complete();
 
 			// Get edition protocol.
-			$protocol = $this->get_protocol( $this->year );
+			$protocol = $this->get_protocol();
 
 			// Set edition protocol as Publish.
 			wp_update_post(
