@@ -55,24 +55,26 @@ class Formatter {
 	 * Get filtered and raw post content.
 	 */
 	private function get_post_content( WP_Post $post ): string {
-		$included_in_content = apply_filters( 'eep_included_in_content', [ 'post_field' => 'post_content' ] );
+		$included_in_content = apply_filters( 'eep_included_in_content', [ 'post_field' => [ 'post_content' ] ] );
 		$content     = '';
-		foreach ( $included_in_content as $type => $key ) {
-			switch ( $type ) {
-				case 'post_field':
-					$content .= get_post_field( $key, $post->ID );
-					break;
-				case 'meta':
-					$content .= get_post_meta( $post->ID, $key, true );
-					break;
-				case 'taxonomy':
-					$terms = get_the_terms( $post->ID, $key );
-					if ( is_array( $terms ) ) {
-						foreach ( $terms as $term ) {
-							$content .= $term->name;
+		foreach ( $included_in_content as $type => $keys ) {
+			foreach ( $keys as $key ) {
+				switch ( $type ) {
+					case 'post_field':
+						$content .= get_post_field( $key, $post->ID );
+						break;
+					case 'meta':
+						$content .= get_post_meta( $post->ID, $key, true );
+						break;
+					case 'taxonomy':
+						$terms = get_the_terms( $post->ID, $key );
+						if ( is_array( $terms ) ) {
+							foreach ( $terms as $term ) {
+								$content .= $term->name;
+							}
 						}
-					}
-					break;
+						break;
+				}
 			}
 		}
 		$filtered_content = apply_filters( 'the_content', $content );
