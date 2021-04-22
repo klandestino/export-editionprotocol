@@ -14,6 +14,7 @@ class Exporter {
 	public function register_hooks(): void {
 		add_action( 'admin_menu', [ $this, 'add_menu' ] );
 		add_action( 'admin_head-tools_page_export_editions', [ $this, 'maybe_schedule_cron' ] );
+		add_action( 'admin_head-tools_page_export_editions', [ $this, 'maybe_cancel_cron' ] );
 		add_action( 'eep_create_export', [ $this, 'export' ] );
 		add_filter( 'removable_query_args', [ $this, 'removable_query_args' ] );
 	}
@@ -43,7 +44,7 @@ class Exporter {
 							<?php if ( $exported_file ) : ?>
 								<td><a href="<?= esc_url( $exported_file['url'] ); ?>">Download export</a></td>
 							<?php elseif ( $exported_processing ) : ?>
-								<td>Export in process, please check back in a few minutes...</td>
+								<td>Export in process, please check back in a few minutes... <a href="<?= esc_url( admin_url( 'tools.php?page=export_editions&eep_action=cancel&eep_nonce=' . wp_create_nonce( 'eep_cancel' ) . '&eep_year=' . $year ) ); ?>">Cancel</a></td>
 							<?php else : ?>
 								<td>No export generated</td>
 							<?php endif; ?>
@@ -78,6 +79,26 @@ class Exporter {
 				delete_option( "eep_exported_file_{$year}" );
 			}
 			wp_schedule_single_event( time(), 'eep_create_export', [ $year ] );
+		}
+	}
+
+	public function maybe_cancel_cron(): void {
+		if ( isset( $_GET['eep_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['eep_nonce'] ) ), 'eep_cancel' ) ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$year   = (int) $_GET['eep_year'] ?? null;
+			$action = isset( $_GET['eep_action'] ) ? sanitize_text_field( wp_unslash( $_GET['eep_action'] ) ) : null;
+			if ( null === $year || 'cancel' !== $action ) {
+				return;
+			}
+			$old_file = get_option( "eep_exported_file_{$year}", false );
+			if ( $old_file ) {
+				unlink( $old_file['path'] );
+				delete_option( "eep_exported_file_{$year}" );
+			}
+			delete_option( "eep_export_processing_{$year}" );
+			wp_clear_scheduled_hook( 'eep_create_export', [ $year ] );
 		}
 	}
 
