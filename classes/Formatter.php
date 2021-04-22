@@ -58,7 +58,14 @@ class Formatter {
 	private function get_post_content( WP_Post $post ): string {
 		$post_excerpt      = get_post_field( 'post_excerpt', $post );
 		$post_content      = get_post_field( 'post_content', $post );
-		$total_content     = $post_excerpt . $post_content;
+		$meta_content      = '';
+		$included_meta     = apply_filters( 'eep_meta_included_in_content', [] );
+		if ( ! empty( $included_meta ) ) {
+			foreach( $included_meta as $key ) {
+				$meta_content .= get_post_meta( $post->ID, $key, true );
+			}
+		}
+		$total_content     = $post_excerpt . $post_content . $meta_content;
 		$total_content     = apply_filters( 'the_content', $total_content );
 		$raw_total_content = wp_strip_all_tags( $total_content );
 		$raw_total_content = preg_replace( "/\r|\n/", '', $raw_total_content );
