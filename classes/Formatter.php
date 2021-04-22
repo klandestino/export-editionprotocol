@@ -100,6 +100,7 @@ class Formatter {
 	private function get_post_images( WP_Post $post ): int {
 		$post_content   = get_post_field( 'post_content', $post->ID );
 		$post_content   = apply_filters( 'the_content', $post_content );
+		$post_content   = preg_replace( '@<(noscript)[^>]*?>.*?</\\1>@si', '', $post_content );
 		$content_images = substr_count( $post_content, '<img' );
 		$featured_image = has_post_thumbnail( $post->ID ) ? 1: 0;
 
