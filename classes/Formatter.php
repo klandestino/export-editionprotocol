@@ -8,7 +8,6 @@ namespace ExportEditionProtocol;
 use WP_Post;
 
 class Formatter {
-
 	/**
 	 * Format a post according to spec.
 	 */
@@ -56,21 +55,30 @@ class Formatter {
 	 * Get filtered and raw post content.
 	 */
 	private function get_post_content( WP_Post $post ): string {
-		$post_excerpt      = get_post_field( 'post_excerpt', $post );
-		$post_content      = get_post_field( 'post_content', $post );
-		$meta_content      = '';
-		$included_meta     = apply_filters( 'eep_meta_included_in_content', [] );
-		if ( ! empty( $included_meta ) ) {
-			foreach( $included_meta as $key ) {
-				$meta_content .= get_post_meta( $post->ID, $key, true );
+		$included_in_content = apply_filters( 'eep_included_in_content', [ 'post_field' => 'post_content' ] );
+		$content     = '';
+		foreach ( $included_in_content as $type => $key ) {
+			switch ( $type ) {
+				case 'post_field':
+					$content .= get_post_field( $key, $post->ID );
+					break;
+				case 'meta':
+					$content .= get_post_meta( $post->ID, $key, true );
+					break;
+				case 'taxonomy':
+					$terms = get_the_terms( $post->ID, $key );
+					if ( is_array( $terms ) ) {
+						foreach ( $terms as $term ) {
+							$content .= $term->name;
+						}
+					}
+					break;
 			}
 		}
-		$total_content     = $post_excerpt . $post_content . $meta_content;
-		$total_content     = apply_filters( 'the_content', $total_content );
-		$raw_total_content = wp_strip_all_tags( $total_content );
-		$raw_total_content = preg_replace( "/\r|\n/", '', $raw_total_content );
-
-		return wp_strip_all_tags( $raw_total_content );
+		$filtered_content = apply_filters( 'the_content', $content );
+		$raw_content      = wp_strip_all_tags( $filtered_content );
+		$raw_content      = preg_replace( "/\r|\n/", '', $raw_content );
+		return $raw_content;
 	}
 
 	/**
