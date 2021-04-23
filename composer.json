@@ -11,7 +11,11 @@
 	],
 	"type": "wordpress-plugin",
     "require": {
-        "deliciousbrains/wp-background-processing": "^1.0",
 		"phpoffice/phpspreadsheet": "^1.17"
-    }
+    },
+	"autoload": {
+		"psr-4": {
+		  "ExportEditionProtocol\\": "classes/"
+		}
+	}
 }
