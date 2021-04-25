@@ -77,10 +77,23 @@ class Formatter {
 				}
 			}
 		}
-		$filtered_content = apply_filters( 'the_content', $content );
+		$filtered_content = $this->filter_post_content( $content );
 		$raw_content      = wp_strip_all_tags( $filtered_content );
 		$raw_content      = preg_replace( "/\r|\n/", '', $raw_content );
 		return $raw_content;
+	}
+
+	/**
+	 * Strip blocks from content.
+	 */
+	protected function exclude_blocks( string $content ): string {
+		$exclude_blocks = apply_filters( 'eep_excluded_blocks_in_content', [] );
+		foreach ( $exclude_blocks as $exclude_block ) {
+			$exclude_block = str_replace( '/', '\/', $exclude_block );
+			$block_regex   = "/<!-- wp:{$exclude_block} [^>]*-->(.|\n)*?<!-- \/wp:{$exclude_block} -->/";
+			$content       = preg_replace( $block_regex, '', $content, -1, $count );
+		}
+		return $content;
 	}
 
 	/**
@@ -115,13 +128,21 @@ class Formatter {
 	 * Get number of images in post content plus featured image.
 	 */
 	private function get_post_images( WP_Post $post ): int {
-		$post_content   = get_post_field( 'post_content', $post->ID );
-		$post_content   = apply_filters( 'the_content', $post_content );
-		$post_content   = preg_replace( '@<(noscript)[^>]*?>.*?</\\1>@si', '', $post_content );
-		$content_images = substr_count( $post_content, '<img' );
-		$featured_image = has_post_thumbnail( $post->ID ) ? 1: 0;
+		$post_content      = $this->filter_post_content( get_post_field( 'post_content', $post->ID ) );
+		$processed_content = preg_replace( '@<(noscript)[^>]*?>.*?</\\1>@si', '', $post_content );
+		$content_images    = substr_count( $processed_content, '<img' );
+		$featured_image    = has_post_thumbnail( $post->ID ) ? 1: 0;
 
 		return (int) $content_images + $featured_image;
+	}
+
+	/**
+	 * Filters the raw post content, excludes blocks etc.
+	 */
+	private function filter_post_content( string $content ): string {
+		$excluded_content = $this->exclude_blocks( $content );
+		$filtered_content = apply_filters( 'the_content', $excluded_content );
+		return html_entity_decode( $filtered_content );
 	}
 
 }
