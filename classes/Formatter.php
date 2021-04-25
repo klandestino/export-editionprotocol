@@ -90,7 +90,7 @@ class Formatter {
 	 * Strip blocks from content.
 	 */
 	protected function exclude_blocks( string $content ): string {
-		$exclude_blocks = apply_filters( 'eep_excluded_blocks_in_content', [ 'lo/link-list-block' ] );
+		$exclude_blocks = apply_filters( 'eep_excluded_blocks_in_content', [] );
 		foreach ( $exclude_blocks as $exclude_block ) {
 			$exclude_block = str_replace( '/', '\/', $exclude_block );
 			$block_regex   = "/<!-- wp:{$exclude_block} [^>]*-->(.|\n)*?<!-- \/wp:{$exclude_block} -->/";
