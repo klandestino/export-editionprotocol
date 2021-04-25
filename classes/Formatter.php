@@ -77,10 +77,26 @@ class Formatter {
 				}
 			}
 		}
-		$filtered_content = apply_filters( 'the_content', $content );
-		$raw_content      = wp_strip_all_tags( $filtered_content );
+
+		$excluded_content = $this->exclude_blocks( $content );
+		$filtered_content = apply_filters( 'the_content', $excluded_content );
+		$decoded_content  = html_entity_decode( $filtered_content );
+		$raw_content      = wp_strip_all_tags( $decoded_content );
 		$raw_content      = preg_replace( "/\r|\n/", '', $raw_content );
 		return $raw_content;
+	}
+
+	/**
+	 * Strip blocks from content.
+	 */
+	protected function exclude_blocks( string $content ): string {
+		$exclude_blocks = apply_filters( 'eep_excluded_blocks_in_content', [ 'lo/link-list-block' ] );
+		foreach ( $exclude_blocks as $exclude_block ) {
+			$exclude_block = str_replace( '/', '\/', $exclude_block );
+			$block_regex   = "/<!-- wp:{$exclude_block} [^>]*-->(.|\n)*?<!-- \/wp:{$exclude_block} -->/";
+        	$content       = preg_replace( $block_regex, '', $content, -1, $count );
+		}
+        return $content;
 	}
 
 	/**
