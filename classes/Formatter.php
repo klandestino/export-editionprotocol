@@ -21,7 +21,7 @@ class Formatter {
 			'ObjectTitle'    => $this->get_post_title( $post ),
 			'PubDate'        => $this->get_post_pubdate( $post ),
 			'MediaCopyright' => $this->get_post_copyright(),
-			'Length'         => '=LEN(D%index%)',
+			'Length'         => '=LEN(SUBSTITUTE(D%index%," ",""))',
 			'Images'         => $this->get_post_images( $post ),
 			'ImagesLength'   => '=SUM(J%index%*300)',
 			'TotalLength'    => '=SUM(I%index%+K%index%)',
