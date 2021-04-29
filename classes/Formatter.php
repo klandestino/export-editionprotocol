@@ -80,6 +80,7 @@ class Formatter {
 		$filtered_content = $this->filter_post_content( $content );
 		$raw_content      = wp_strip_all_tags( $filtered_content );
 		$raw_content      = preg_replace( "/\r|\n/", '', $raw_content );
+		$raw_content      = trim( preg_replace( '/\t+/', '', $raw_content ) );
 		return $raw_content;
 	}
 
