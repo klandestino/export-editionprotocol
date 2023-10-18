@@ -115,7 +115,7 @@ class Formatter {
 	 * Get the post publish date.
 	 */
 	private function get_post_pubdate( WP_Post $post ): string {
-		return date( 'Y-m-d', strtotime( $post->post_date ) );
+		return gmdate( 'Y-m-d', strtotime( $post->post_date ) );
 	}
 
 	/**

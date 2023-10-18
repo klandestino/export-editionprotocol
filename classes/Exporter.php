@@ -75,7 +75,7 @@ class Exporter {
 			update_option( "eep_export_processing_{$year}", true );
 			$old_file = get_option( "eep_exported_file_{$year}", false );
 			if ( $old_file ) {
-				unlink( $old_file['path'] );
+				wp_delete_file( $old_file['path'] );
 				delete_option( "eep_exported_file_{$year}" );
 			}
 			wp_schedule_single_event( time(), 'eep_create_export', [ $year ] );
@@ -94,7 +94,7 @@ class Exporter {
 			}
 			$old_file = get_option( "eep_exported_file_{$year}", false );
 			if ( $old_file ) {
-				unlink( $old_file['path'] );
+				wp_delete_file( $old_file['path'] );
 				delete_option( "eep_exported_file_{$year}" );
 			}
 			delete_option( "eep_export_processing_{$year}" );
@@ -130,7 +130,7 @@ class Exporter {
 
 		// Loop through all articles and generate cells in sheet.
 		foreach ( $data as $index => $article ) {
-			$index++; // Add 1 to index to avoid zero index in Excel.
+			++$index; // Add 1 to index to avoid zero index in Excel.
 			foreach ( $article as $key => $value ) {
 				$article[ $key ] = str_replace( '%index%', $index, $value );
 			}
@@ -140,7 +140,7 @@ class Exporter {
 		// Create a xlsx file and save it to the uploads directory.
 		$upload_dir = trailingslashit( wp_upload_dir()['basedir'] ) . 'export-edition-protocol/';
 		if ( ! is_dir( $upload_dir ) ) {
-			mkdir( $upload_dir, 0777 );
+			wp_mkdir_p( $upload_dir );
 		}
 		$filename = md5( $year . time() ) . '.xlsx';
 		$filepath = $upload_dir . $filename;
@@ -169,7 +169,7 @@ class Exporter {
 		global $wpdb;
 		$result = [];
 		$years  = $wpdb->get_results(
-			"SELECT YEAR(post_date) FROM {$wpdb->posts} WHERE post_status = 'publish' GROUP BY YEAR(post_date) DESC",
+			"SELECT YEAR(post_date) FROM {$wpdb->posts} WHERE post_status = 'publish' GROUP BY YEAR(post_date) ORDER BY YEAR(post_date) DESC",
 			ARRAY_N
 		);
 		if ( is_array( $years ) && count( $years ) > 0 ) {
@@ -189,8 +189,7 @@ class Exporter {
 	private function get_end_date( int $week, int $year ): string {
 		$date_time = new DateTime();
 		$date_time->setISODate( $year, $week );
-		$date_time->modify('+6 days');
-		return $date_time->format('Y-m-d');
+		$date_time->modify( '+6 days' );
+		return $date_time->format( 'Y-m-d' );
 	}
-
 }
