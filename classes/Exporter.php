@@ -169,7 +169,7 @@ class Exporter {
 		global $wpdb;
 		$result = [];
 		$years  = $wpdb->get_results(
-			"SELECT YEAR(post_date) FROM {$wpdb->posts} WHERE post_status = 'publish' GROUP BY YEAR(post_date) ORDER BY YEAR(post_date) DESC",
+			"SELECT YEAR(post_date) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type = 'post' GROUP BY YEAR(post_date) ORDER BY YEAR(post_date) DESC",
 			ARRAY_N
 		);
 		if ( is_array( $years ) && count( $years ) > 0 ) {
